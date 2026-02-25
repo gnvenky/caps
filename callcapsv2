@@ -1,0 +1,53 @@
+corpus = [
+    Document(
+        doc_id="1",
+        text="CAPS algorithm for semantic enterprise search",
+        metadata={"type": "paper"},
+        embedding=embed("CAPS algorithm for semantic enterprise search"),
+        popularity=0.9
+    ),
+    Document(
+        doc_id="2",
+        text="Vector databases and approximate nearest neighbor search",
+        metadata={"type": "blog"},
+        embedding=embed("Vector databases and approximate nearest neighbor search"),
+        popularity=0.7
+    ),
+    Document(
+        doc_id="3",
+        text="SQL and metadata filtering in enterprise systems",
+        metadata={"type": "paper"},
+        embedding=embed("SQL and metadata filtering in enterprise systems"),
+        popularity=0.4
+    ),
+    Document(
+        doc_id="4",
+        text="Learning to rank for information retrieval",
+        metadata={"type": "paper"},
+        embedding=embed("Learning to rank for information retrieval"),
+        popularity=0.8
+    ),
+]
+
+caps_v2 = CAPSV2(alpha=0.5) # Instantiate CAPSV2 with aggressive alpha
+
+query = "semantic enterprise search"
+constraints = {"type": "paper"}
+
+print("=== CAPSV2 Initial Search Results ===")
+results_v2_initial = caps_v2.search(query, corpus, constraints, k=3)
+for i, d in enumerate(results_v2_initial, 1):
+    print(f"{i}. {d.doc_id} | {d.text}")
+
+# Simulate user feedback: click + long dwell on the second result to make adaptation stand out
+clicked_doc_v2 = results_v2_initial[1] # Now clicking on the second document (doc_id=3)
+caps_v2.register_feedback(clicked_doc_v2, reward=3) # Increased reward to 3
+
+print("\n=== CAPSV2 Updated Weights After Feedback ===")
+for k, v in caps_v2.weights.items():
+    print(f"{k}: {v:.3f}")
+
+print("\n=== CAPSV2 Search Results After Adaptation ===")
+results_v2_adapted = caps_v2.search(query, corpus, constraints, k=3)
+for i, d in enumerate(results_v2_adapted, 1):
+    print(f"{i}. {d.doc_id} | {d.text}")
