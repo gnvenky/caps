@@ -1,0 +1,11 @@
+Context-Adaptive Predictive Search (CAPS) Demo
+This Google Colab notebook demonstrates a Context-Adaptive Predictive Search (CAPS) engine, which adapts its search result ranking based on user feedback. It showcases how a learning rate (alpha) can influence the adaptiveness of the system.
+
+Contents:
+CAPS Class: The original implementation of the search engine with a conservative learning rate (alpha = 0.05).
+CAPSV2 Class: A modified version of CAPS with an aggressive learning rate (alpha = 0.5) to show more pronounced adaptation to user feedback.
+Demo Usage: Demonstrations of both CAPS and CAPSV2, including initial search results, simulated user feedback, and adapted search results, highlighting the impact of the alpha parameter.
+How to Run:
+Open the notebook in Google Colab.
+Run all cells sequentially. The output will show the initial search results, updated weights after simulated user feedback, and the adapted search results for both CAPS and CAPSV2.
+Observe the differences in weight updates and result reordering between CAPS and CAPSV2 to understand the effect of the alpha parameter.
