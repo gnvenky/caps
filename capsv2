@@ -1,0 +1,100 @@
+class CAPSV2:
+    def __init__(self, alpha: float = 0.5): # Modified alpha to 0.5
+        # Adaptive weights
+        self.weights = {
+            "sem": 1.0,
+            "struct": 0.5,
+            "hist": 0.5,
+            "pop": 0.2
+        }
+        self.alpha = alpha
+        self.user_history = {}  # doc_id -> interaction count
+
+    # -------- Stage 1: Semantic Retrieval --------
+
+    def semantic_retrieval(
+        self,
+        q_vec: np.ndarray,
+        corpus: List[Document],
+        k0: int = 10
+    ) -> List[Document]:
+        scored = [
+            (doc, cosine(q_vec, doc.embedding))
+            for doc in corpus
+        ]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [doc for doc, _ in scored[:k0]]
+
+    # -------- Stage 2: Structural Filtering --------
+
+    def structural_filter(
+        self,
+        docs: List[Document],
+        constraints: Dict
+    ) -> List[Document]:
+        def match(doc):
+            return all(doc.metadata.get(k) == v for k, v in constraints.items())
+        return [doc for doc in docs if match(doc)]
+
+    # -------- Stage 3: Adaptive Ranking --------
+
+    def score(self, doc: Document, q_vec: np.ndarray) -> float:
+        sem = cosine(q_vec, doc.embedding)
+        struct = 1.0  # passed filter
+        hist = self.user_history.get(doc.doc_id, 0)
+        pop = doc.popularity
+
+        return (
+            self.weights["sem"] * sem +
+            self.weights["struct"] * struct +
+            self.weights["hist"] * hist +
+            self.weights["pop"] * pop
+        )
+
+    def rank(
+        self,
+        q_vec: np.ndarray,
+        docs: List[Document],
+        k: int = 5
+    ) -> List[Document]:
+        scored = [(doc, self.score(doc, q_vec)) for doc in docs]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [doc for doc in docs[:k]]
+
+    # -------- Stage 4: Online Weight Update --------
+
+    def update_weights(self, doc: Document, reward: float):
+        features = {
+            "sem": 1.0,
+            "struct": 1.0,
+            "hist": self.user_history.get(doc.doc_id, 0),
+            "pop": doc.popularity
+        }
+
+        for k in self.weights:
+            self.weights[k] += self.alpha * reward * features[k]
+
+    def register_feedback(self, doc: Document, reward: float):
+        self.user_history[doc.doc_id] = (
+            self.user_history.get(doc.doc_id, 0) + 1
+        )
+        self.update_weights(doc, reward)
+
+    # -------- End-to-End Search --------
+
+    def search(
+        self,
+        query: str,
+        corpus: List[Document],
+        constraints: Dict = None,
+        k: int = 5
+    ) -> List[Document]:
+        if constraints is None:
+            constraints = {}
+
+        q_vec = embed(query)
+        c0 = self.semantic_retrieval(q_vec, corpus)
+        c1 = self.structural_filter(c0, constraints)
+        return self.rank(q_vec, c1, k)
+
+print("CAPSV2 class defined with alpha=0.5")
